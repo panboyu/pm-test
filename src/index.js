@@ -1,17 +1,31 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import { DOMParser } from 'prosemirror-model'
+import { schema } from "prosemirror-schema-basic"
+import { EditorState } from "prosemirror-state"
+import { EditorView } from "prosemirror-view"
+import { undo, redo, history } from 'prosemirror-history'
+import { keymap } from 'prosemirror-keymap'
+import { baseKeymap } from 'prosemirror-commands'
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+import placeholder from './plugins/placeholder'
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+import './index.css'
+
+let state = EditorState.create({
+  // schema,
+  doc: DOMParser.fromSchema(schema).parse(document.querySelector('#root')),
+  plugins: [
+    history(),
+    keymap({ 'Mod-z': undo, 'Mod-y': redo }),
+    keymap(baseKeymap),
+    placeholder('这一刻你在想什么...')
+  ]
+})
+
+let view = new EditorView(document.querySelector('#root'), {
+  state,
+  dispatchTransaction(tr) {
+    console.log('==tr==', tr)
+    let newState = view.state.apply(tr)
+    view.updateState(newState)
+  }
+})
